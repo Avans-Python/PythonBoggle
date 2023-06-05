@@ -1,0 +1,49 @@
+{%  block head %}
+    <title>Game Screen</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+{% endblock %}
+<h1>Boggle Game</h1>
+<h2>Speler: {{ game.player.name }}</h2>
+<h2>Tijd: {% if game.timer %}3:00{% else %}Onbeperkt{% endif %}</h2>
+
+<div id="game-board">
+    <h3>Speelveld:</h3>
+    <table>
+        {% for row in game.generate_grid() %}
+            <tr>
+                {% for letter in row %}
+                    <td>{{ letter }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<div id="word-input">
+    <h3>Voer een woord in:</h3>
+    <form action="{{ url_for('check_word') }}" method="POST">
+        <input type="text" name="word">
+        <input type="submit" value="Check woord">
+    </form>
+    <p>{% if message%} {{ message }} {% else %} {% endif %}</p>
+</div>
+
+<div id="end-game">
+    {% if game.timer %}
+        {% if game.is_time_up() %}
+            <h3>Tijd is op! Eindscore: {{ game.score }}</h3>
+        {% else %}
+            <h3>Spel is beëindigd! Eindscore: {{ game.score }}</h3>
+        {% endif %}
+    {% else %}
+        <h3>Spel is beëindigd! Eindscore: {{ game.score }}</h3>
+    {% endif %}
+    <form action="{{ url_for('end_game') }}" method="POST">
+        <input type="submit" value="Nieuw spel">
+    </form>
+</div>
+
+{%  block body %}
+
+
+{% endblock %}
