@@ -7,6 +7,7 @@ from controllers.Gamecontroller import GameController
 from flask import Flask, redirect, render_template, request
 
 app = Flask(__name__)
+
 gamecontroller = GameController()
 
 def get_db_connection():
@@ -107,20 +108,42 @@ def check_word():
     word = request.form.get("word")
     result = gamecontroller.check_word(word)
 
-    if result == "valid":
+    if result == True:
         message = "Valid word!"
     else:
         message = "Invalid word!"
 
     game = gamecontroller.game
     remaining_time = gamecontroller.get_remaining_time()
-
     return render_template("game.html", game=game, remaining_time=remaining_time, message=message)
 
+#end of the game
 @app.route("/end_game")
 def end_game():
     score = gamecontroller.end_game()
     return render_template("end_game.html", score=score)
+
+#add statistics to the game
+def fetch_stats(conn):
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT players.name, games.create_date, games.score, games.timer, GROUP_CONCAT(games_players.correctWord) as words
+        FROM games
+        JOIN players ON games.player_id = players.id
+        JOIN games_players ON games_players.game_id = games.id
+        GROUP BY games.id
+        ORDER BY games.create_date DESC
+    """)
+    rows = cur.fetchall()
+    return rows
+
+
+@app.route('/statistics')
+def statistics():
+    conn = get_db_connection()
+    stats = fetch_stats(conn)
+    return render_template('stats.html', stats=stats)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
