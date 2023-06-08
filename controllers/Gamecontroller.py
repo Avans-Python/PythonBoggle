@@ -5,8 +5,8 @@ class GameController:
     def __init__(self):
         self.game = None
 
-    def new_game(self, size, timer, username):
-        self.game = Game(size, timer, username)
+    def new_game(self, size, timer, username, id):
+        self.game = Game(size, timer, username, id)
         self.game.generate_grid()
 
     def check_word(self, word):

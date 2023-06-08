@@ -6,7 +6,8 @@ from models.Player import Player
 from models.Dice import Dice
 
 class Game:
-    def __init__(self, size, timer, username):
+    def __init__(self, size, timer, username, id):
+        self.id = id
         self.player = Player(username)
         self.size = int(size)
         self.timer = timer
@@ -71,6 +72,7 @@ class Game:
 
         return word_list
 
+    #set uppercase input words
     def uppercase_input(func):
         def wrapper(self, arg):
             arg = str(arg).upper()
@@ -79,8 +81,6 @@ class Game:
     
     @uppercase_input
     def is_word_on_grid(self, word):
-       
-        word = str(word).upper()
         used_positions = set() 
         index = 0
         for row in range(self.size):
@@ -101,7 +101,7 @@ class Game:
             return True
 
         used_positions.add((row, col))
-
+        #range were its looking in at the grid
         for i in range(-1, 2):
             for j in range(-1, 2):
                 if i == 0 and j == 0:  # Skip the current position

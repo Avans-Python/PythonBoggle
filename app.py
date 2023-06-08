@@ -1,3 +1,4 @@
+from datetime import datetime
 import sqlite3
 from sqlite3 import Error
 from controllers.Gamecontroller import GameController
@@ -42,24 +43,23 @@ def create_table(conn, create_table_sql):
 database = r"database.db"
 
 sql_create_player_table = """ CREATE TABLE IF NOT EXISTS players (
-                                id integer PRIMARY KEY,
-                                name text NOT NULL
+                                name text PRIMARY KEY 
                             ); """
 
 sql_create_game_table = """CREATE TABLE IF NOT EXISTS games (
-                                id integer PRIMARY KEY,
+                                id integer PRIMARY KEY AUTOINCREMENT,
                                 score integer,
-                                player_id integer NOT NULL,
+                                player_id text NOT NULL,
                                 timer integer NOT NULL,
                                 create_date timestamp NOT NULL,
-                                FOREIGN KEY (player_id) REFERENCES players (id)
+                                FOREIGN KEY (player_id) REFERENCES players (name)
                             );"""
 
 sql_create_game_player_table = """ CREATE TABLE IF NOT EXISTS games_players (
-                                    player_id integer NOT NULL,
+                                    player_id text NOT NULL,
                                     game_id integer NOT NULL,
                                     correctWord text NOT NULL,
-                                    FOREIGN KEY (player_id) REFERENCES players (id),
+                                    FOREIGN KEY (player_id) REFERENCES players (name),
                                     FOREIGN KEY (game_id) REFERENCES games (id)
                                 ); """
 
@@ -90,8 +90,33 @@ def start_game():
     username = request.form['username']
     size = request.form['size']
     timer = True if request.form.get('timer') == "on" else False
-    gamecontroller.new_game(size, timer, username) 
-    return redirect("/game")
+
+    # Open a connection to the database
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        # Query the database to see if the player already exists
+        cur.execute("SELECT * FROM players WHERE name=?", (username,))
+        player = cur.fetchone()
+
+        # If the player does not exist, add them to the database
+        if player is None:
+            cur.execute("INSERT INTO players (name) VALUES (?)", (username,))
+            conn.commit()
+
+        current_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        cur.execute("INSERT INTO games (score, player_id, timer, create_date) VALUES (?, ?, ?, ?)",
+                    (0, username, timer, current_datetime))
+        conn.commit()
+        cur.execute("SELECT last_insert_rowid()")
+        game_id = cur.fetchone()[0]
+
+        gamecontroller.new_game(size, timer, username, game_id)
+        return redirect("/game")
+
+    finally:
+        conn.close()
 
 
 @app.route('/game')
@@ -107,42 +132,75 @@ def show_game():
 def check_word():
     word = request.form.get("word")
     result = gamecontroller.check_word(word)
-
+    game = gamecontroller.game
+     
     if result == True:
-        message = "Valid word!"
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("UPDATE games SET score = ? WHERE id = ?", (game.score, game.id))
+            cur.execute("INSERT INTO games_players (player_id, game_id, correctWord) VALUES (?, ?, ?)",
+                        (game.player.name, game.id, word))
+            message = "Valid word!"
+            conn.commit()
+
+        finally:
+            cur.close()
+            conn.close()
     else:
         message = "Invalid word!"
 
-    game = gamecontroller.game
     remaining_time = gamecontroller.get_remaining_time()
     return render_template("game.html", game=game, remaining_time=remaining_time, message=message)
+
+
+
 
 #end of the game
 @app.route("/end_game")
 def end_game():
-    score = gamecontroller.end_game()
-    return render_template("end_game.html", score=score)
+
+    try:
+        score = gamecontroller.end_game()
+        return render_template("end_game.html", score=score)
+
+    finally:
+        conn.close()
+
 
 #add statistics to the game
 def fetch_stats(conn):
     cur = conn.cursor()
     cur.execute("""
-        SELECT players.name, games.create_date, games.score, games.timer, GROUP_CONCAT(games_players.correctWord) as words
-        FROM games
-        JOIN players ON games.player_id = players.id
-        JOIN games_players ON games_players.game_id = games.id
-        GROUP BY games.id
-        ORDER BY games.create_date DESC
+        SELECT p.name AS player_name, g.id AS game_id, g.score, g.timer, g.create_date, gp.correctWord
+        FROM games_players gp
+        JOIN games g ON gp.game_id = g.id
+        JOIN players p ON gp.player_id = p.name
     """)
-    rows = cur.fetchall()
-    return rows
+    results = cur.fetchall()
+    cur.close()
+    print(results);
+    return results
 
 
 @app.route('/statistics')
 def statistics():
-    conn = get_db_connection()
-    stats = fetch_stats(conn)
-    return render_template('stats.html', stats=stats)
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT p.name AS player_name, g.id AS game_id, g.score, g.timer, g.create_date, gp.correctWord
+            FROM games g
+            JOIN players p ON g.player_id = p.name
+            LEFT JOIN games_players gp ON gp.game_id = g.id
+        """)
+        results = cur.fetchall()
+        cur.close()
+        print(results)
+        return render_template('stats.html', stats=results)
+
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":
