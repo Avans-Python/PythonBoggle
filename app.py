@@ -160,7 +160,7 @@ def end_game():
 
     try:
         score = gamecontroller.end_game()
-        return render_template("end_game.html", score=score)
+        return render_template("game.html", score=score)
 
     finally:
         conn.close()

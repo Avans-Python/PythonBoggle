@@ -26,8 +26,8 @@
 <div id="word-input">
     <h3>Voer een woord in:</h3>
     <form action="{{ url_for('check_word') }}" method="POST">
-        <input type="text" name="word">
-        <input type="submit" value="Check woord">
+        <input type="text" name="word" {% if game.timer and game.is_time_up() %}disabled{% endif %}>
+        <input type="submit" value="Check woord" {% if game.timer and game.is_time_up() %}disabled{% endif %}>
     </form>
     <p>{% if message%} {{ message }} {% else %} {% endif %}</p>
 </div>
@@ -41,7 +41,6 @@
         {% endif %}
     {% else %}
         <h3>Score: {{ game.score }}</h3>
-        <button id="stop-game">Stop Game</button>
     {% endif %}
     
     <a href="{{ url_for('index') }}">Nieuw spel</a>
