@@ -154,8 +154,6 @@ def check_word():
     return render_template("game.html", game=game, remaining_time=remaining_time, message=message)
 
 
-
-
 #end of the game
 @app.route("/end_game")
 def end_game():
