@@ -45,7 +45,7 @@ class Game:
             random.shuffle(self.dices)
             self.grid = [[random.choice(self.dices[i % len(self.dices)].letters) for i in range(self.size)] for _ in range(self.size)]
             return
-    
+
     def check_word(self, word):
         if self.is_valid_word(word) and self.is_word_on_grid(word) and word not in self.words:
             self.words.append(word)
@@ -71,6 +71,13 @@ class Game:
 
         return word_list
 
+    def uppercase_input(func):
+        def wrapper(self, arg):
+            arg = str(arg).upper()
+            return func(self, arg)
+        return wrapper
+    
+    @uppercase_input
     def is_word_on_grid(self, word):
        
         word = str(word).upper()
@@ -108,7 +115,6 @@ class Game:
                     continue
 
                 new_used_positions = set(used_positions)
-                print('used_positions:', list(new_used_positions))
 
                 if self.search_word(word, new_row, new_col, new_used_positions, index + 1):
                     return True
