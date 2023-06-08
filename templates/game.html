@@ -8,7 +8,7 @@
 <div class="col align-self-center mx-auto text-align-center W-50" style="text-align: -webkit-center;">
 <h1>Boggle Game</h1>
 <h2>Speler: {{ game.player.name }}</h2>
-<h2>Tijd: {% if game.timer %}3:00{% else %}Onbeperkt{% endif %}</h2>
+<h2>Tijd: {% if game.timer %} {{remaining_time }} {% else %}Onbeperkt{% endif %}</h2>
 
 <div id="game-board" class="">
     <h3>Speelveld:</h3>
@@ -35,7 +35,7 @@
 <div id="end-game">
     {% if game.timer %}
         {% if game.is_time_up() %}
-            <h3>Tijd is op! Eindscore: {{ game.score }}</h3>
+            <h3>Tijd is om! Eindscore: {{ game.score }}</h3>
         {% else %}
             <h3>Score: {{ game.score }}</h3>
         {% endif %}
@@ -43,7 +43,7 @@
         <h3>Score: {{ game.score }}</h3>
     {% endif %}
     
-    <a href="{{ url_for('index') }}">Nieuw spel</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('index') }}">Nieuw spel</a>
 </div>
 
 </div>

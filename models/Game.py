@@ -1,5 +1,6 @@
 import datetime
 from datetime import timedelta
+import time
 import random
 import string
 from models.Player import Player
@@ -40,8 +41,7 @@ class Game:
 
         for dice_letters in letters:
             self.dices.append(Dice(dice_letters))
-
-
+            
     def generate_grid(self):
             random.shuffle(self.dices)
             self.grid = [[random.choice(self.dices[i % len(self.dices)].letters) for i in range(self.size)] for _ in range(self.size)]
@@ -123,13 +123,11 @@ class Game:
         return False
     
     def is_time_up(self):
-        # Implementeer de logica om te controleren of de tijd voorbij is (alleen als timer is ingesteld) hier
         if self.timer and datetime.datetime.now() >= self.end_time:
             return True
         return False
     
     def get_remaining_time(self):
-        # Implementeer de logica om de resterende tijd terug te geven (alleen als timer is ingesteld) hier
         if self.timer:
             remaining_time = self.end_time - datetime.datetime.now()
             return remaining_time.total_seconds()

@@ -113,6 +113,7 @@ def start_game():
         game_id = cur.fetchone()[0]
 
         gamecontroller.new_game(size, timer, username, game_id)
+        
         return redirect("/game")
 
     finally:
@@ -166,35 +167,23 @@ def end_game():
         conn.close()
 
 
-#add statistics to the game
-def fetch_stats(conn):
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT p.name AS player_name, g.id AS game_id, g.score, g.timer, g.create_date, gp.correctWord
-        FROM games_players gp
-        JOIN games g ON gp.game_id = g.id
-        JOIN players p ON gp.player_id = p.name
-    """)
-    results = cur.fetchall()
-    cur.close()
-    print(results);
-    return results
-
-
 @app.route('/statistics')
 def statistics():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            SELECT p.name AS player_name, g.id AS game_id, g.score, g.timer, g.create_date, gp.correctWord
+            SELECT p.name AS Player, g.id AS Game_ID, g.score AS Score, g.timer AS Timer, g.create_date AS Creation_Date, 
+                GROUP_CONCAT(gp.correctWord, ', ') AS Correct_Words
             FROM games g
             JOIN players p ON g.player_id = p.name
-            LEFT JOIN games_players gp ON gp.game_id = g.id
+            LEFT JOIN games_players gp ON g.id = gp.game_id
+            GROUP BY g.id
+            ORDER BY g.create_date DESC
         """)
         results = cur.fetchall()
-        cur.close()
-        print(results)
+        for row in results:
+            print("\t".join(str(value) for value in row))
         return render_template('stats.html', stats=results)
 
     finally:
