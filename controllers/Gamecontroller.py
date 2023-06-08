@@ -33,3 +33,10 @@ class GameController:
             return score
         else:
             return "Game not started"
+        
+    
+    def check_game_over(self):
+        if self.game:
+            return self.game.is_time_up()
+        return False
+    
